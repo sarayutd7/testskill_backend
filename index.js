@@ -40,17 +40,18 @@ app.post('/addUser', (req, res) => {
     let lastname = req.body.lastname;
     let username = req.body.username;
     let password = req.body.password;  
+
     // validation
     if (!name || !lastname || !username || !hash_pass) {
         return res.status(400).send({ error: true, message: "Please enter Name and Lastname, Username Or Password."});
     } else {
         bcrypt.hash(password, 12).then((hash_pass)=>{
-        dbConnection.query('INSERT INTO users (name, lastname,username, password) VALUES(?, ?, ?)', [name, lastname, username, hash_pass], (error, results, fields) => {
+            dbConnection.query('INSERT INTO users (name, lastname, username, password) VALUES(?, ?, ?)', [name, lastname, username, hash_pass], (error, results, fields) => {
             if (error) throw error;
             return res.send({ error: false, data: results, message: "User detail successfully added"})
         })
         .then(result => {
-            res.send(`your account has been created Successfully, Now you can <a href="/">Login</a>`);
+            return res.send({ error: true, data: results, message: "Error Can't insert data"})
         }).catch(err => {
            // THROW INSERTING USER ERROR'S
                 if (err) throw err;
@@ -61,13 +62,12 @@ app.post('/addUser', (req, res) => {
         if (err) throw err;
     })
 
-        
     }
 });
 
 
 //
-// retrieve book by id 
+// retrieve User by id 
 app.get('/users/:id', (req, res) => {
     let id = req.params.id;
 
@@ -88,7 +88,30 @@ app.get('/users/:id', (req, res) => {
         })
     }
 })
+// End retrieve User by id 
 
+// delete user by id
+app.delete('/user', (req, res) => {
+    let id = req.body.id;
+
+    if (!id) {
+        return res.status(400).send({ error: true, message: "Please provide Users id"});
+    } else {
+        dbCon.query('DELETE FROM users WHERE id = ?', [id], (error, results, fields) => {
+            if (error) throw error;
+
+            let message = "";
+            if (results.affectedRows === 0) {
+                message = "Users not found";
+            } else {
+                message = "Users successfully deleted";
+            }
+
+            return res.send({ error: false, data: results, message: message })
+        })
+    }
+})
+// End delete user by id
 
 app.listen(3232, () => {
     console.log('Node App is running on port 3232');
